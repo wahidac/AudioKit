@@ -52,8 +52,9 @@ class LiveView: AKLiveViewController {
             oscillator.amplitude = amplitude
         })
 
-        let plot = AKOutputWaveformPlot()
-        addView(plot)
+        let plotView = AKOutputWaveformPlot.createView()
+        //let plot = AKOutputWaveformPlot()
+        addView(plotView) // By default, just looks at the AudioKit's output and visualizes that
     }
 }
 
