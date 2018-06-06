@@ -44,6 +44,7 @@ public typealias AKCallback = () -> Void
     fileprivate static var notificationObservers: [Any] = []
 
     /// An audio output operation that most applications will need to use last
+    // The output node (the last thing any consumer would touch), connects to a mixer -> engine output node
     @objc open static var output: AKNode? {
         didSet {
             do {

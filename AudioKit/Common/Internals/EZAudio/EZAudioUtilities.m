@@ -670,6 +670,14 @@ BOOL __shouldExitOnCheckResultFail = YES;
 
 //------------------------------------------------------------------------------
 
+/*
+    TODO: The Ring Buffer is good for optimized, real time performance as the song is playing, but we want
+    to instantly be able to shift this window. It would be stupid to do this in real time, if we go back over the same
+ parts, we'll need to redraw shit. So basically, we should just create our view one time. In code that's all we want to do.
+ Basically just grab the "createPathWithPoints" method, and use it to create a static view. Make it once, then you can
+ dump all the meta data you used to create the view. Then just slap this view to a scroll view and thats it....Get this part done first. Then you can map the scroll view to the precise part of the song we are referencing. will need to have some mapping of x-axis position in the scroll view to the precise millisecond we are referencing in the song. x=0 -> 0 msec, and so on...then in the scrollviewDidScroll method, we can just update our timestamp in the song.
+ */
+
 + (void)appendBuffer:(float *)buffer
       withBufferSize:(UInt32)bufferSize
        toHistoryInfo:(EZPlotHistoryInfo *)historyInfo
@@ -685,14 +693,34 @@ BOOL __shouldExitOnCheckResultFail = YES;
     //
     // Update the scroll history datasource
     //
+    
+    // Copy the new data (buffer), to the circular buffer. just finds the head and copies the approrpriate
+    // amount of bytes
     TPCircularBufferProduceBytes(&historyInfo->circularBuffer, buffer, bufferSize * sizeof(float));
+    // targetBytes = number of bytes we want in our window (which is a subset of the ring buffer i think...)
     int32_t targetBytes = historyInfo->bufferSize * sizeof(float);
     int32_t availableBytes = 0;
+    // Head equals the part of the buffer we write into, tail = the part behind, where we would consume from
     float *historyBuffer = TPCircularBufferTail(&historyInfo->circularBuffer, &availableBytes);
+    // At this point availableBytes = the # of bytes we havent consumed yet
     int32_t bytes = MIN(targetBytes, availableBytes);
+    //printf("Copying %d bytes from the tail of the ring buffer into the scratch buffer\n", bytes);
+    // Here, we are copying "bytes" number of bytes from the ring buffer into your window/scratch buffer.
+    // Bytes will basically be availableBytes (everything in the ring buffer), up until the point at which we
+    // reach the desired size of the scratch window (targetBytes), at which point, we will start consuming the
+    // ring buffer on each iteration by the amount we've grown over our desired window. So if our ring buffer is
+    // 8 bytes larger than the window, we'll consume/dump the first 8 bytes, which in effect, moves our ring buffer
+    // tail upwards, so that the next time we copy, we will copy everything before minus the first 8 bytes, which
+    // will be replaced by the 8 most recent bytes. This basically shifts out scrath window. Once we hit the size of the
+    // scratch window, we always just copy the most recent #bytes for our scratch windows size
     memmove(historyInfo->buffer, historyBuffer, bytes);
+    //printf("Target Bytes: %d\nAvailable Bytes: %d\n", targetBytes, availableBytes);
     if (targetBytes <= availableBytes)
     {
+        //printf("Consuming %d Bytes in the Circular Buffer\n", availableBytes - targetBytes);
+        // This frees up space in the buffer by the amount you have copied to the window buffer. We
+        // only consume once we've copied targetBytes number of bytes to the window.
+        // TODO: play around with the windowing size (bufferSize of historyInfo)
         TPCircularBufferConsume(&historyInfo->circularBuffer, availableBytes - targetBytes);
     }
 }

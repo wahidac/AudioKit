@@ -328,12 +328,17 @@ public class AKPlayer: AKNode {
         guard let audioFile = audioFile else { return }
 
         if playerNode.engine == nil {
+            // playerNode = the first connection to the engine, it is the player
+            // TODO: Do we want a player here if we aren't interesting in actually playing? probably not,
+            // probably just want the engine
             AudioKit.engine.attach(playerNode)
         }
         if mixer.engine == nil {
+            // The mixer then comes right after
             AudioKit.engine.attach(mixer)
         }
         if faderNode.avAudioNode.engine == nil {
+            // Then a fader
             AudioKit.engine.attach(faderNode.avAudioNode)
         }
 

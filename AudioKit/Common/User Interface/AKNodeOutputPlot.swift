@@ -19,11 +19,18 @@ open class AKNodeOutputPlot: EZAudioPlot {
 
     internal func setupNode(_ input: AKNode?) {
         if !isConnected {
+            // Tap = something that just reads from the source but doesnt fuck w/ it
             input?.avAudioNode.installTap(
                 onBus: 0,
                 bufferSize: bufferSize,
                 format: nil) { [weak self] (buffer, _) in
-
+                    // TODO: Figure out how to get the "buffer" here in one shot and store it in memory
+                    // (with obvious memory limits). "buffer" is just a AVAudioPCMBuffer object. We
+                    // want one AVAudioPCMBuffer object (this is an apple class)
+                    
+                    // TODO: input in this case by default = AudioKit.output i.e. the node we connect to the
+                    // mixer -> engines output. isnt literally the engines output node but for purposes of
+                    // the consumer, it is the final output node
                     guard let strongSelf = self else {
                         AKLog("Unable to create strong reference to self")
                         return
@@ -31,6 +38,7 @@ open class AKNodeOutputPlot: EZAudioPlot {
                     buffer.frameLength = strongSelf.bufferSize
                     let offset = Int(buffer.frameCapacity - buffer.frameLength)
                     if let tail = buffer.floatChannelData?[0] {
+                        // TODO: we might just be ignoring one channel here.......
                         strongSelf.updateBuffer(&tail[offset], withBufferSize: strongSelf.bufferSize)
                     }
             }
@@ -100,6 +108,8 @@ open class AKNodeOutputPlot: EZAudioPlot {
     ///   - height: Height of the view
     ///
     @objc public init(_ input: AKNode? = AudioKit.output, frame: CGRect, bufferSize: Int = 1_024) {
+        // Uses the default AudioKit.output node as its input if none is specified, we will want to
+        // ultimately specift directly the node to use
         super.init(frame: frame)
         self.plotType = .buffer
         self.backgroundColor = AKColor.white

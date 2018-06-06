@@ -105,6 +105,8 @@ FOUNDATION_EXPORT UInt32 const EZAudioPlotDefaultMaxHistoryBufferLength;
  */
 @property (nonatomic, strong) EZAudioPlotWaveformLayer *waveformLayer;
 
+@property (nonatomic) BOOL hasDumpedPointsOnce;
+
 //------------------------------------------------------------------------------
 #pragma mark - Adjust Resolution
 //------------------------------------------------------------------------------
