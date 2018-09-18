@@ -262,11 +262,6 @@ UInt32 const EZAudioPlotDefaultMaxHistoryBufferLength = 8192;
                                      pointCount:self.pointCount
                                          inRect:frame];
     
-    if (!self.hasDumpedPointsOnce && self.pointCount > 1 && self.points[1].y > 0.0) {
-        [self dumpPathToFile:path points:self.points pointCount:self.pointCount];
-    }
-    
-    
     if (self.shouldOptimizeForRealtimePlot)
     {
         [CATransaction begin];
@@ -283,36 +278,6 @@ UInt32 const EZAudioPlotDefaultMaxHistoryBufferLength = 8192;
 
 //------------------------------------------------------------------------------
 
-- (void)dumpPathToFile:(CGPathRef)path points:(CGPoint *)points pointCount:(UInt32)pointCount {
-    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
-    NSString *docDir = [paths objectAtIndex: 0];
-    NSString* docFileCGPath = [docDir stringByAppendingPathComponent: @"CGPathWaveformDump"];
-    NSString* docFileCGPoints = [docDir stringByAppendingPathComponent: @"CGPointsWaveformDump"];
-    
-    NSLog(@"Doing a dump of the CGPath at %@ and CGPoints at %@", docFileCGPath, docFileCGPoints);
-    UIBezierPath *bezierPath = [UIBezierPath bezierPathWithCGPath:path];
-    BOOL successCGPath = [NSKeyedArchiver archiveRootObject:bezierPath toFile:docFileCGPath];
-    
-    NSMutableArray<NSValue *> *pointArray = [[NSMutableArray alloc] initWithCapacity:pointCount];
-    for (int i = 0; i < pointCount; i++) {
-        CGPoint point = points[i];
-        [pointArray addObject:[NSValue valueWithCGPoint:point]];
-    }
-    BOOL successCGPoints = [NSKeyedArchiver archiveRootObject:pointArray toFile:docFileCGPoints];
-
-    if (successCGPath && successCGPoints) {
-        NSLog(@"Successfull marshalled to disk");
-    } else {
-        NSLog(@"Failed to marshall the object to disk");
-    }
-    self.hasDumpedPointsOnce = YES;
-}
-
-- (UIBezierPath *)loadPathFromFile {
-    NSString *docFile = [[NSBundle mainBundle] pathForResource:@"CGPathWaveformDump" ofType:@""];
-    UIBezierPath *bezierPath = [NSKeyedUnarchiver unarchiveObjectWithFile:docFile];
-    return bezierPath;
-}
 
 // The main method for actually drawing the graph....this takes the entire scratch buffer and
 // graphs it.

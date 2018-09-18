@@ -329,8 +329,6 @@ public class AKPlayer: AKNode {
 
         if playerNode.engine == nil {
             // playerNode = the first connection to the engine, it is the player
-            // TODO: Do we want a player here if we aren't interesting in actually playing? probably not,
-            // probably just want the engine
             AudioKit.engine.attach(playerNode)
         }
         if mixer.engine == nil {
