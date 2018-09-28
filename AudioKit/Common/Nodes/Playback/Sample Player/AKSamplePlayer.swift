@@ -6,15 +6,16 @@
 //  Copyright © 2018 AudioKit. All rights reserved.
 //
 
+/// An alternative to AKSampler or AKAudioPlayer, AKSamplePlayer is a player that 
+/// doesn't rely on an as much Apple AV foundation/engine code as the others.
+/// As any other Sampler, it plays a part of a given sound file at a specified rate 
+/// with specified volume. Changing the rate plays it faster and therefore sounds 
+/// higher or lower. Set rate to 2.0 to double playback speed and create an octave.  
+/// Give it a blast on `Sample Player.xcplaygroundpage`
 import Foundation
 
-/// A Sample type, just a UInt32
-public typealias Sample = UInt32
-
-/// Callback function that can be called from C
-public typealias AKCCallback = @convention(block) () -> Void
-
 /// Audio player that loads a sample into memory
+@available(*, deprecated, message: "AKSamplePlayer is now AKWaveTable")
 open class AKSamplePlayer: AKNode, AKComponent {
 
     public typealias AKAudioUnitType = AKSamplePlayerAudioUnit
@@ -33,10 +34,10 @@ open class AKSamplePlayer: AKNode, AKComponent {
     fileprivate var rateParameter: AUParameter?
     fileprivate var volumeParameter: AUParameter?
 
-    /// Ramp Time represents the speed at which parameters are allowed to change
-    @objc open dynamic var rampTime: Double = AKSettings.rampTime {
+    /// Ramp Duration represents the speed at which parameters are allowed to change
+    @objc open dynamic var rampDuration: Double = AKSettings.rampDuration {
         willSet {
-            internalAU?.rampTime = newValue
+            internalAU?.rampDuration = newValue
         }
     }
 
@@ -117,7 +118,7 @@ open class AKSamplePlayer: AKNode, AKComponent {
 
     /// Number of samples in the audio stored in memory
     open var size: Sample {
-        if (avAudiofile != nil) {
+        if avAudiofile != nil {
             return Sample(avAudiofile!.samplesCount)
         }
         return Sample(maximumSamples)
@@ -185,7 +186,7 @@ open class AKSamplePlayer: AKNode, AKComponent {
         self.rate = rate
         self.volume = volume
         self.endPoint = endPoint
-        if (file != nil) {
+        if file != nil {
             self.avAudiofile = file!
             self.endPoint = Sample(avAudiofile!.samplesCount)
         }
@@ -241,7 +242,7 @@ open class AKSamplePlayer: AKNode, AKComponent {
         if maximumSamples != 0 {
             internalAU?.setupAudioFileTable(UInt32(maximumSamples) * 2)
         }
-        if (file != nil) {
+        if file != nil {
             load(file: file!)
         }
     }

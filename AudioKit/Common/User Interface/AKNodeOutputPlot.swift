@@ -5,6 +5,7 @@
 //  Created by Aurelius Prochazka, revision history on Github.
 //  Copyright © 2018 AudioKit. All rights reserved.
 //
+import AudioKit
 
 extension Notification.Name {
     static let IAAConnected = Notification.Name(rawValue: "IAAConnected")
@@ -40,8 +41,8 @@ open class AKNodeOutputPlot: EZAudioPlot {
 
     // Useful to reconnect after connecting to Audiobus or IAA
     @objc func reconnect() {
-        node?.avAudioNode.removeTap(onBus: 0)
-        setupNode(node)
+        pause()
+        resume()
     }
 
     @objc open func pause() {
@@ -71,10 +72,10 @@ open class AKNodeOutputPlot: EZAudioPlot {
     /// The node whose output to graph
     @objc open var node: AKNode? {
         willSet {
-            node?.avAudioNode.removeTap(onBus: 0)
+            pause()
         }
         didSet {
-            setupNode(node)
+            resume()
         }
     }
 
@@ -99,7 +100,7 @@ open class AKNodeOutputPlot: EZAudioPlot {
     ///   - width: Width of the view
     ///   - height: Height of the view
     ///
-    @objc public init(_ input: AKNode? = AudioKit.output, frame: CGRect, bufferSize: Int = 1_024) {
+    @objc public init(_ input: AKNode? = AudioKit.output, frame: CGRect = CGRect.zero, bufferSize: Int = 1_024) {
         super.init(frame: frame)
         self.plotType = .buffer
         self.backgroundColor = AKColor.white

@@ -8,6 +8,7 @@ let file = try AKAudioFile(readFileName: playgroundAudioFiles[0])
 
 let player = AKPlayer(audioFile: file)
 player.isLooping = true
+player.buffering = .always
 
 let fatten = AKOperationEffect(player) { input, parameters in
 
@@ -39,7 +40,7 @@ class LiveView: AKLiveViewController {
         addView(AKSlider(property: "Time",
                          value: fatten.parameters[0],
                          range: 0.03 ... 0.1,
-                         format:  "%0.3f s"
+                         format: "%0.3f s"
         ) { sliderValue in
             fatten.parameters[0] = sliderValue
         })

@@ -22,25 +22,29 @@ open class AKSampler: AKPolyphonicNode, AKComponent, AKInput {
     fileprivate var pitchBendParameter: AUParameter?
     fileprivate var vibratoDepthParameter: AUParameter?
     fileprivate var filterCutoffParameter: AUParameter?
-    fileprivate var filterEgStrengthParameter: AUParameter?
+    fileprivate var filterStrengthParameter: AUParameter?
     fileprivate var filterResonanceParameter: AUParameter?
+    fileprivate var glideRateParameter: AUParameter?
 
-    fileprivate var ampAttackTimeParameter: AUParameter?
-    fileprivate var ampDecayTimeParameter: AUParameter?
-    fileprivate var ampSustainLevelParameter: AUParameter?
-    fileprivate var ampReleaseTimeParameter: AUParameter?
+    fileprivate var attackDurationParameter: AUParameter?
+    fileprivate var decayDurationParameter: AUParameter?
+    fileprivate var sustainLevelParameter: AUParameter?
+    fileprivate var releaseDurationParameter: AUParameter?
 
-    fileprivate var filterAttackTimeParameter: AUParameter?
-    fileprivate var filterDecayTimeParameter: AUParameter?
+    fileprivate var filterAttackDurationParameter: AUParameter?
+    fileprivate var filterDecayDurationParameter: AUParameter?
     fileprivate var filterSustainLevelParameter: AUParameter?
-    fileprivate var filterReleaseTimeParameter: AUParameter?
+    fileprivate var filterReleaseDurationParameter: AUParameter?
 
     fileprivate var filterEnableParameter: AUParameter?
+    fileprivate var loopThruReleaseParameter: AUParameter?
+    fileprivate var monophonicParameter: AUParameter?
+    fileprivate var legatoParameter: AUParameter?
 
-    /// Ramp Time represents the speed at which parameters are allowed to change
-    @objc open dynamic var rampTime: Double = AKSettings.rampTime {
+    /// Ramp Duration represents the speed at which parameters are allowed to change
+    @objc open dynamic var rampDuration: Double = AKSettings.rampDuration {
         willSet {
-            internalAU?.rampTime = newValue
+            internalAU?.rampDuration = newValue
         }
     }
 
@@ -117,20 +121,20 @@ open class AKSampler: AKPolyphonicNode, AKComponent, AKInput {
     }
 
     /// Filter EG strength (harmonic ratio)
-    @objc open dynamic var filterEgStrength: Double = 20.0 {
+    @objc open dynamic var filterStrength: Double = 20.0 {
         willSet {
-            if filterEgStrength == newValue {
+            if filterStrength == newValue {
                 return
             }
 
             if internalAU?.isSetUp ?? false {
-                if token != nil && filterEgStrengthParameter != nil {
-                    filterEgStrengthParameter?.setValue(Float(newValue), originator: token!)
+                if token != nil && filterStrengthParameter != nil {
+                    filterStrengthParameter?.setValue(Float(newValue), originator: token!)
                     return
                 }
             }
 
-            internalAU?.filterEgStrength = newValue
+            internalAU?.filterStrength = newValue
         }
     }
 
@@ -152,56 +156,74 @@ open class AKSampler: AKPolyphonicNode, AKComponent, AKInput {
         }
     }
 
-    /// Amp attack time (seconds)
-    @objc open dynamic var ampAttackTime: Double = 0.0 {
+    /// Glide rate (seconds per octave)
+    @objc open dynamic var glideRate: Double = 0.0 {
         willSet {
-            if ampAttackTime != newValue {
-                internalAU?.ampAttackTime = newValue
+            if glideRate == newValue {
+                return
+            }
+
+            if internalAU?.isSetUp ?? false {
+                if token != nil && glideRateParameter != nil {
+                    glideRateParameter?.setValue(Float(newValue), originator: token!)
+                    return
+                }
+            }
+
+            internalAU?.glideRate = newValue
+        }
+    }
+
+    /// Amplitude attack duration (seconds)
+    @objc open dynamic var attackDuration: Double = 0.0 {
+        willSet {
+            if attackDuration != newValue {
+                internalAU?.attackDuration = newValue
             }
         }
     }
 
-    /// Amp Decay time (seconds)
-    @objc open dynamic var ampDecayTime: Double = 0.0 {
+    /// Amplitude Decay duration (seconds)
+    @objc open dynamic var decayDuration: Double = 0.0 {
         willSet {
-            if ampDecayTime != newValue {
-                internalAU?.ampDecayTime = newValue
+            if decayDuration != newValue {
+                internalAU?.decayDuration = newValue
             }
         }
     }
 
-    /// Amp sustain level (fraction)
-    @objc open dynamic var ampSustainLevel: Double = 1.0 {
+    /// Amplitude sustain level (fraction)
+    @objc open dynamic var sustainLevel: Double = 1.0 {
         willSet {
-            if ampSustainLevel != newValue {
-                internalAU?.ampSustainLevel = newValue
+            if sustainLevel != newValue {
+                internalAU?.sustainLevel = newValue
             }
         }
     }
 
-    /// Amp Release time (seconds)
-    @objc open dynamic var ampReleaseTime: Double = 0.0 {
+    /// Amplitude Release duration (seconds)
+    @objc open dynamic var releaseDuration: Double = 0.0 {
         willSet {
-            if ampReleaseTime != newValue {
-                internalAU?.ampReleaseTime = newValue
+            if releaseDuration != newValue {
+                internalAU?.releaseDuration = newValue
             }
         }
     }
 
-    /// Filter attack time (seconds)
-    @objc open dynamic var filterAttackTime: Double = 0.0 {
+    /// Filter attack duration (seconds)
+    @objc open dynamic var filterAttackDuration: Double = 0.0 {
         willSet {
-            if filterAttackTime != newValue {
-                internalAU?.filterAttackTime = newValue
+            if filterAttackDuration != newValue {
+                internalAU?.filterAttackDuration = newValue
             }
         }
     }
 
-    /// Filter Decay time (seconds)
-    @objc open dynamic var filterDecayTime: Double = 0.0 {
+    /// Filter Decay duration (seconds)
+    @objc open dynamic var filterDecayDuration: Double = 0.0 {
         willSet {
-            if filterDecayTime != newValue {
-                internalAU?.filterDecayTime = newValue
+            if filterDecayDuration != newValue {
+                internalAU?.filterDecayDuration = newValue
             }
         }
     }
@@ -215,11 +237,11 @@ open class AKSampler: AKPolyphonicNode, AKComponent, AKInput {
         }
     }
 
-    /// Filter Release time (seconds)
-    @objc open dynamic var filterReleaseTime: Double = 0.0 {
+    /// Filter Release duration (seconds)
+    @objc open dynamic var filterReleaseDuration: Double = 0.0 {
         willSet {
-            if filterReleaseTime != newValue {
-                internalAU?.filterReleaseTime = newValue
+            if filterReleaseDuration != newValue {
+                internalAU?.filterReleaseDuration = newValue
             }
         }
     }
@@ -229,6 +251,33 @@ open class AKSampler: AKPolyphonicNode, AKComponent, AKInput {
         willSet {
             if filterEnable != newValue {
                 internalAU?.filterEnable = newValue ? 1.0 : 0.0
+            }
+        }
+    }
+
+    /// Loop Thru Release (boolean, 0.0 for false or 1.0 for true)
+    @objc open dynamic var loopThruRelease: Bool = false {
+        willSet {
+            if loopThruRelease != newValue {
+                internalAU?.loopThruRelease = newValue ? 1.0 : 0.0
+            }
+        }
+    }
+
+    /// isMonophonic (boolean, 0.0 for false or 1.0 for true)
+    @objc open dynamic var isMonophonic: Bool = false {
+        willSet {
+            if isMonophonic != newValue {
+                internalAU?.isMonophonic = newValue ? 1.0 : 0.0
+            }
+        }
+    }
+
+    /// isLegato (boolean, 0.0 for false or 1.0 for true)
+    @objc open dynamic var isLegato: Bool = false {
+        willSet {
+            if isLegato != newValue {
+                internalAU?.isLegato = newValue ? 1.0 : 0.0
             }
         }
     }
@@ -243,17 +292,21 @@ open class AKSampler: AKPolyphonicNode, AKComponent, AKInput {
     ///   - pitchBend: semitones, signed
     ///   - vibratoDepth: semitones, typically less than 1.0
     ///   - filterCutoff: relative to sample playback pitch, 1.0 = fundamental, 2.0 = 2nd harmonic etc
-    ///   - filterEgStrength: same units as filterCutoff; amount filter EG adds to filterCutoff
+    ///   - filterStrength: same units as filterCutoff; amount filter EG adds to filterCutoff
     ///   - filterResonance: dB, -20.0 - 20.0
-    ///   - ampAttackTime: seconds, 0.0 - 10.0
-    ///   - ampDecayTime: seconds, 0.0 - 10.0
-    ///   - ampSustainLevel: 0.0 - 1.0
-    ///   - ampReleaseTime: seconds, 0.0 - 10.0
+    ///   - attackDuration: seconds, 0.0 - 10.0
+    ///   - decayDuration: seconds, 0.0 - 10.0
+    ///   - sustainLevel: 0.0 - 1.0
+    ///   - releaseDuration: seconds, 0.0 - 10.0
     ///   - filterEnable: true to enable per-voice filters
-    ///   - filterAttackTime: seconds, 0.0 - 10.0
-    ///   - filterDecayTime: seconds, 0.0 - 10.0
+    ///   - filterAttackDuration: seconds, 0.0 - 10.0
+    ///   - filterDecayDuration: seconds, 0.0 - 10.0
     ///   - filterSustainLevel: 0.0 - 1.0
-    ///   - filterReleaseTime: seconds, 0.0 - 10.0
+    ///   - filterReleaseDuration: seconds, 0.0 - 10.0
+    ///   - glideRate: seconds/octave, 0.0 - 10.0
+    ///   - loopThruRelease: if true, sample will continue looping after key release
+    ///   - isMonophonic: true for mono, false for polyphonic
+    ///   - isLegato: (mono mode onl) if true, legato notes will not retrigger
     ///
     @objc public init(
         _ input: AKNode? = nil,
@@ -261,33 +314,41 @@ open class AKSampler: AKPolyphonicNode, AKComponent, AKInput {
         pitchBend: Double = 0.0,
         vibratoDepth: Double = 0.0,
         filterCutoff: Double = 4.0,
-        filterEgStrength: Double = 20.0,
+        filterStrength: Double = 20.0,
         filterResonance: Double = 0.0,
-        ampAttackTime: Double = 0.0,
-        ampDecayTime: Double = 0.0,
-        ampSustainLevel: Double = 1.0,
-        ampReleaseTime: Double = 0.0,
+        attackDuration: Double = 0.0,
+        decayDuration: Double = 0.0,
+        sustainLevel: Double = 1.0,
+        releaseDuration: Double = 0.0,
         filterEnable: Bool = false,
-        filterAttackTime: Double = 0.0,
-        filterDecayTime: Double = 0.0,
+        filterAttackDuration: Double = 0.0,
+        filterDecayDuration: Double = 0.0,
         filterSustainLevel: Double = 1.0,
-        filterReleaseTime: Double = 0.0) {
+        filterReleaseDuration: Double = 0.0,
+        glideRate: Double = 0.0,
+        loopThruRelease: Bool = true,
+        isMonophonic: Bool = false,
+        isLegato: Bool = false  ) {
 
         self.masterVolume = masterVolume
         self.pitchBend = pitchBend
         self.vibratoDepth = vibratoDepth
         self.filterCutoff = filterCutoff
-        self.filterEgStrength = filterEgStrength
+        self.filterStrength = filterStrength
         self.filterResonance = filterResonance
-        self.ampAttackTime = ampAttackTime
-        self.ampDecayTime = ampDecayTime
-        self.ampSustainLevel = ampSustainLevel
-        self.ampReleaseTime = ampReleaseTime
+        self.attackDuration = attackDuration
+        self.decayDuration = decayDuration
+        self.sustainLevel = sustainLevel
+        self.releaseDuration = releaseDuration
         self.filterEnable = filterEnable
-        self.filterAttackTime = filterAttackTime
-        self.filterDecayTime = filterDecayTime
+        self.filterAttackDuration = filterAttackDuration
+        self.filterDecayDuration = filterDecayDuration
         self.filterSustainLevel = filterSustainLevel
-        self.filterReleaseTime = filterReleaseTime
+        self.filterReleaseDuration = filterReleaseDuration
+        self.glideRate = glideRate
+        self.loopThruRelease = loopThruRelease
+        self.isMonophonic = isMonophonic
+        self.isLegato = isLegato
 
         _Self.register()
 
@@ -312,17 +373,21 @@ open class AKSampler: AKPolyphonicNode, AKComponent, AKInput {
         self.pitchBendParameter = tree["pitchBend"]
         self.vibratoDepthParameter = tree["vibratoDepth"]
         self.filterCutoffParameter = tree["filterCutoff"]
-        self.filterEgStrengthParameter = tree["filterEgStrength"]
+        self.filterStrengthParameter = tree["filterStrength"]
         self.filterResonanceParameter = tree["filterResonance"]
-        self.ampAttackTimeParameter = tree["ampAttackTime"]
-        self.ampDecayTimeParameter = tree["ampDecayTime"]
-        self.ampSustainLevelParameter = tree["ampSustainLevel"]
-        self.ampReleaseTimeParameter = tree["ampReleaseTime"]
-        self.filterAttackTimeParameter = tree["filterAttackTime"]
-        self.filterDecayTimeParameter = tree["filterDecayTime"]
+        self.attackDurationParameter = tree["attackDuration"]
+        self.decayDurationParameter = tree["decayDuration"]
+        self.sustainLevelParameter = tree["sustainLevel"]
+        self.releaseDurationParameter = tree["releaseDuration"]
+        self.filterAttackDurationParameter = tree["filterAttackDuration"]
+        self.filterDecayDurationParameter = tree["filterDecayDuration"]
         self.filterSustainLevelParameter = tree["filterSustainLevel"]
-        self.filterReleaseTimeParameter = tree["filterReleaseTime"]
+        self.filterReleaseDurationParameter = tree["filterReleaseDuration"]
         self.filterEnableParameter = tree["filterEnable"]
+        self.glideRateParameter = tree["glideRate"]
+        self.loopThruReleaseParameter = tree["loopThruRelease"]
+        self.monophonicParameter = tree["monophonic"]
+        self.legatoParameter = tree["legato"]
 
         token = tree.token(byAddingParameterObserver: { [weak self] _, _ in
 
@@ -336,35 +401,39 @@ open class AKSampler: AKPolyphonicNode, AKComponent, AKInput {
             }
         })
 
-        self.internalAU?.setParameterImmediately(.masterVolumeParam, value: masterVolume)
-        self.internalAU?.setParameterImmediately(.pitchBendParam, value: pitchBend)
-        self.internalAU?.setParameterImmediately(.vibratoDepthParam, value: vibratoDepth)
-        self.internalAU?.setParameterImmediately(.filterCutoffParam, value: filterCutoff)
-        self.internalAU?.setParameterImmediately(.filterEgStrengthParam, value: filterEgStrength)
-        self.internalAU?.setParameterImmediately(.filterResonanceParam, value: filterResonance)
-        self.internalAU?.setParameterImmediately(.ampAttackTimeParam, value: ampAttackTime)
-        self.internalAU?.setParameterImmediately(.ampDecayTimeParam, value: ampDecayTime)
-        self.internalAU?.setParameterImmediately(.ampSustainLevelParam, value: ampSustainLevel)
-        self.internalAU?.setParameterImmediately(.ampReleaseTimeParam, value: ampReleaseTime)
-        self.internalAU?.setParameterImmediately(.filterAttackTimeParam, value: filterAttackTime)
-        self.internalAU?.setParameterImmediately(.filterDecayTimeParam, value: filterDecayTime)
-        self.internalAU?.setParameterImmediately(.filterSustainLevelParam, value: filterSustainLevel)
-        self.internalAU?.setParameterImmediately(.filterReleaseTimeParam, value: filterReleaseTime)
-        self.internalAU?.setParameterImmediately(.filterEnableParam, value: filterEnable ? 1.0 : 0.0)
+        self.internalAU?.setParameterImmediately(.masterVolume, value: masterVolume)
+        self.internalAU?.setParameterImmediately(.pitchBend, value: pitchBend)
+        self.internalAU?.setParameterImmediately(.vibratoDepth, value: vibratoDepth)
+        self.internalAU?.setParameterImmediately(.filterCutoff, value: filterCutoff)
+        self.internalAU?.setParameterImmediately(.filterStrength, value: filterStrength)
+        self.internalAU?.setParameterImmediately(.filterResonance, value: filterResonance)
+        self.internalAU?.setParameterImmediately(.attackDuration, value: attackDuration)
+        self.internalAU?.setParameterImmediately(.decayDuration, value: decayDuration)
+        self.internalAU?.setParameterImmediately(.sustainLevel, value: sustainLevel)
+        self.internalAU?.setParameterImmediately(.releaseDuration, value: releaseDuration)
+        self.internalAU?.setParameterImmediately(.filterAttackDuration, value: filterAttackDuration)
+        self.internalAU?.setParameterImmediately(.filterDecayDuration, value: filterDecayDuration)
+        self.internalAU?.setParameterImmediately(.filterSustainLevel, value: filterSustainLevel)
+        self.internalAU?.setParameterImmediately(.filterReleaseDuration, value: filterReleaseDuration)
+        self.internalAU?.setParameterImmediately(.filterEnable, value: filterEnable ? 1.0 : 0.0)
+        self.internalAU?.setParameterImmediately(.glideRate, value: glideRate)
+        self.internalAU?.setParameterImmediately(.loopThruRelease, value: loopThruRelease ? 1.0 : 0.0)
+        self.internalAU?.setParameterImmediately(.monophonic, value: isMonophonic ? 1.0 : 0.0)
+        self.internalAU?.setParameterImmediately(.legato, value: isLegato ? 1.0 : 0.0)
     }
 
-    open func loadAKAudioFile(sd: AKSampleDescriptor, file: AKAudioFile) {
+    open func loadAKAudioFile(from sampleDescriptor: AKSampleDescriptor, file: AKAudioFile) {
         let sampleRate = Float(file.sampleRate)
         let sampleCount = Int32(file.samplesCount)
         let channelCount = Int32(file.channelCount)
         let flattened = Array(file.floatChannelData!.joined())
         let data = UnsafeMutablePointer<Float>(mutating: flattened)
-        internalAU?.loadSampleData( sdd: AKSampleDataDescriptor( sd: sd,
-                                                                 sampleRateHz: sampleRate,
-                                                                 bInterleaved: false,
-                                                                 nChannels: channelCount,
-                                                                 nSamples: sampleCount,
-                                                                 pData: data) )
+        internalAU?.loadSampleData(from: AKSampleDataDescriptor(sampleDescriptor: sampleDescriptor,
+                                                                sampleRate: sampleRate,
+                                                                isInterleaved: false,
+                                                                channelCount: channelCount,
+                                                                sampleCount: sampleCount,
+                                                                data: data) )
     }
 
     open func stopAllVoices() {
@@ -375,12 +444,12 @@ open class AKSampler: AKPolyphonicNode, AKComponent, AKInput {
         internalAU?.restartVoices()
     }
 
-    open func loadRawSampleData(sdd: AKSampleDataDescriptor) {
-        internalAU?.loadSampleData(sdd: sdd)
+    open func loadRawSampleData(from sampleDataDescriptor: AKSampleDataDescriptor) {
+        internalAU?.loadSampleData(from: sampleDataDescriptor)
     }
 
-    open func loadCompressedSampleFile(sfd: AKSampleFileDescriptor) {
-        internalAU?.loadCompressedSampleFile(sfd: sfd)
+    open func loadCompressedSampleFile(from sampleFileDescriptor: AKSampleFileDescriptor) {
+        internalAU?.loadCompressedSampleFile(from: sampleFileDescriptor)
     }
 
     open func unloadAllSamples() {
@@ -400,7 +469,7 @@ open class AKSampler: AKPolyphonicNode, AKComponent, AKInput {
     }
 
     open override func play(noteNumber: MIDINoteNumber, velocity: MIDIVelocity, frequency: Double) {
-        internalAU?.playNote(noteNumber: noteNumber, velocity: velocity, noteHz: Float(frequency))
+        internalAU?.playNote(noteNumber: noteNumber, velocity: velocity, noteFrequency: Float(frequency))
     }
 
     open override func stop(noteNumber: MIDINoteNumber) {

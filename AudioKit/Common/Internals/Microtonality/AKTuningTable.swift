@@ -33,7 +33,7 @@
 
 @objc open class AKTuningTable: AKTuningTableBase {
 
-    @objc internal var masterSet = [Frequency]()
+    @objc private(set) public var masterSet = [Frequency]()
 
     /// Note number for standard reference note
     @objc public var middleCNoteNumber: MIDINoteNumber = 60 {
@@ -59,6 +59,7 @@
     }
 
     /// Range of downwards Pitch Bend used in etNN calculation.  Must match your synthesizer's pitch bend DOWN range
+    /// etNNPitchBendRangeDown and etNNPitchBendRangeUp must cover a spread that is greater than the maximum distance between two notes in your octave. 
     @objc public var etNNPitchBendRangeDown: Cents = -50 {
         didSet {
             updateTuningTableFromMasterSet()
@@ -68,6 +69,7 @@
     internal let pitchBendLow: Double = 0
 
     /// Range of upwards Pitch Bend used in etNN calculation.  Must match your synthesizer's pitch bend UP range
+    /// etNNPitchBendRangeDown and etNNPitchBendRangeUp must cover a spread that is greater than the maximum distance between two notes in your octave. 
     @objc public var etNNPitchBendRangeUp: Cents = 50 {
         didSet {
             updateTuningTableFromMasterSet()
@@ -202,5 +204,11 @@
             }
         }
         //AKLog("etnn dictionary:\(etNNDictionary)")
+    }
+
+    /// Renders and returns the masterSet values as an array of cents
+    @objc public func masterSetInCents() -> [Cents] {
+        let cents = masterSet.map({ log2($0) * 1_200 })
+        return cents
     }
 }

@@ -22,12 +22,15 @@ class ViewController: NSViewController, AKMIDIListener {
         midi.addListener(self)
 
         sourcePopUpButton.removeAllItems()
+        sourcePopUpButton.addItem(withTitle: "(select input)")
         sourcePopUpButton.addItems(withTitles: midi.inputNames)
     }
 
     @IBAction func sourceChanged(_ sender: NSPopUpButton) {
-        midi.closeAllInputs()
-        midi.openInput(midi.inputNames[sender.indexOfSelectedItem])
+        if sender.indexOfSelectedItem > 0 {
+            midi.closeAllInputs()
+            midi.openInput(midi.inputNames[sender.indexOfSelectedItem - 1])
+        }
     }
 
     func receivedMIDINoteOn(noteNumber: MIDINoteNumber, velocity: MIDIVelocity, channel: MIDIChannel) {
@@ -68,7 +71,7 @@ class ViewController: NSViewController, AKMIDIListener {
         if let command = AKMIDISystemCommand(rawValue: data[0]) {
             var newString = "MIDI System Command: \(command) \n"
             for i in 0 ..< data.count {
-                let hexValue = String(format:"%2X", data[i])
+                let hexValue = String(format: "%2X", data[i])
                 newString.append("\(hexValue) ")
             }
             updateText(newString)

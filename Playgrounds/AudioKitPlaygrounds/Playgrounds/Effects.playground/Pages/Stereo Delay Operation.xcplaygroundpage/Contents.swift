@@ -7,8 +7,9 @@ let file = try AKAudioFile(readFileName: playgroundAudioFiles[0])
 
 let player = AKPlayer(audioFile: file)
 player.isLooping = true
+player.buffering = .always
 
-let effect = AKOperationEffect(player, numberOfChannels: 2) { _, parameters in
+let effect = AKOperationEffect(player, channelCount: 2) { _, parameters in
     let leftDelay = AKOperation.leftInput.variableDelay(time: parameters[0], feedback: parameters[1])
     let rightDelay = AKOperation.rightInput.variableDelay(time: parameters[2], feedback: parameters[3])
     return [leftDelay, rightDelay]

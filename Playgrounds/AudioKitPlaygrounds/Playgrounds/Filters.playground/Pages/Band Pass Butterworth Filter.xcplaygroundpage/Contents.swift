@@ -11,12 +11,13 @@ let file = try AKAudioFile(readFileName: playgroundAudioFiles[0])
 
 let player = AKPlayer(audioFile: file)
 player.isLooping = true
+player.buffering = .always
 
 //: Next, we'll connect the audio sources to a band pass filter
 var filter = AKBandPassButterworthFilter(player)
 filter.centerFrequency = 5_000 // Hz
 filter.bandwidth = 600 // Cents
-filter.rampTime = 1.0
+filter.rampDuration = 1.0
 AudioKit.output = filter
 try AudioKit.start()
 player.play()

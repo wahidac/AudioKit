@@ -9,8 +9,8 @@
 #include "AKOscillatorDSP.hpp"
 #import "AKLinearParameterRamp.hpp"
 
-extern "C" void* createOscillatorDSP(int nChannels, double sampleRate) {
-    AKOscillatorDSP* dsp = new AKOscillatorDSP();
+extern "C" void *createOscillatorDSP(int nChannels, double sampleRate) {
+    AKOscillatorDSP *dsp = new AKOscillatorDSP();
     dsp->init(nChannels, sampleRate);
     return dsp;
 }
@@ -27,13 +27,13 @@ struct AKOscillatorDSP::_Internal {
 
 AKOscillatorDSP::AKOscillatorDSP() : _private(new _Internal) {
     _private->frequencyRamp.setTarget(defaultFrequency, true);
-    _private->frequencyRamp.setDurationInSamples(defaultRampTimeSamples);
+    _private->frequencyRamp.setDurationInSamples(defaultRampDurationSamples);
     _private->amplitudeRamp.setTarget(defaultAmplitude, true);
-    _private->amplitudeRamp.setDurationInSamples(defaultRampTimeSamples);
+    _private->amplitudeRamp.setDurationInSamples(defaultRampDurationSamples);
     _private->detuningOffsetRamp.setTarget(defaultDetuningOffset, true);
-    _private->detuningOffsetRamp.setDurationInSamples(defaultRampTimeSamples);
+    _private->detuningOffsetRamp.setDurationInSamples(defaultRampDurationSamples);
     _private->detuningMultiplierRamp.setTarget(defaultDetuningMultiplier, true);
-    _private->detuningMultiplierRamp.setDurationInSamples(defaultRampTimeSamples);
+    _private->detuningMultiplierRamp.setDurationInSamples(defaultRampDurationSamples);
 }
 
 // Uses the ParameterAddress as a key
@@ -51,11 +51,11 @@ void AKOscillatorDSP::setParameter(AUParameterAddress address, AUValue value, bo
         case AKOscillatorParameterDetuningMultiplier:
             _private->detuningMultiplierRamp.setTarget(clamp(value, detuningMultiplierLowerBound, detuningMultiplierUpperBound), immediate);
             break;
-        case AKOscillatorParameterRampTime:
-            _private->frequencyRamp.setRampTime(value, _sampleRate);
-            _private->amplitudeRamp.setRampTime(value, _sampleRate);
-            _private->detuningOffsetRamp.setRampTime(value, _sampleRate);
-            _private->detuningMultiplierRamp.setRampTime(value, _sampleRate);
+        case AKOscillatorParameterRampDuration:
+            _private->frequencyRamp.setRampDuration(value, _sampleRate);
+            _private->amplitudeRamp.setRampDuration(value, _sampleRate);
+            _private->detuningOffsetRamp.setRampDuration(value, _sampleRate);
+            _private->detuningMultiplierRamp.setRampDuration(value, _sampleRate);
             break;
     }
 }
@@ -71,8 +71,8 @@ float AKOscillatorDSP::getParameter(uint64_t address) {
             return _private->detuningOffsetRamp.getTarget();
         case AKOscillatorParameterDetuningMultiplier:
             return _private->detuningMultiplierRamp.getTarget();
-        case AKOscillatorParameterRampTime:
-            return _private->frequencyRamp.getRampTime(_sampleRate);
+        case AKOscillatorParameterRampDuration:
+            return _private->frequencyRamp.getRampDuration(_sampleRate);
     }
     return 0;
 }
@@ -86,9 +86,8 @@ void AKOscillatorDSP::init(int _channels, double _sampleRate) {
     _private->_osc->amp = defaultAmplitude;
 }
 
-void AKOscillatorDSP::destroy() {
+void AKOscillatorDSP::deinit() {
     sp_osc_destroy(&_private->_osc);
-    AKSoundpipeDSPBase::destroy();
 }
 
 void AKOscillatorDSP::setupWaveform(uint32_t size) {
@@ -117,7 +116,7 @@ void AKOscillatorDSP::process(AUAudioFrameCount frameCount, AUAudioFrameCount bu
 
         float temp = 0;
         for (int channel = 0; channel < _nChannels; ++channel) {
-            float* out = (float *)_outBufferListPtr->mBuffers[channel].mData + frameOffset;
+            float *out = (float *)_outBufferListPtr->mBuffers[channel].mData + frameOffset;
 
             if (_playing) {
                 if (channel == 0) {

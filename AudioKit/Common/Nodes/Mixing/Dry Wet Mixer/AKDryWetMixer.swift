@@ -44,9 +44,9 @@ open class AKDryWetMixer: AKNode, AKInput {
         dryGain.volume = 1 - balance
         dryGain.connect(to: mixer)
 
-        wet?.connect(to:wetGain)
+        wet?.connect(to: wetGain)
         wetGain.volume = balance
-        wetGain.connect(to:mixer)
+        wetGain.connect(to: mixer)
     }
     public var inputNode: AVAudioNode {
         return dryGain.avAudioNode
@@ -60,7 +60,7 @@ open class AKDryWetMixer: AKNode, AKInput {
     }
 
     // Disconnect the node
-    override open func disconnect() {
+    override open func detach() {
         AudioKit.detach(nodes: [mixer.avAudioNode, dryGain.avAudioNode, wetGain.avAudioNode])
     }
 

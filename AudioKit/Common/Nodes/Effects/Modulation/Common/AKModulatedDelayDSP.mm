@@ -6,14 +6,19 @@
 //  Copyright © 2018 AudioKit. All rights reserved.
 //
 
+#import <AudioToolbox/AudioToolbox.h>
+#import <AudioUnit/AudioUnit.h>
+#import <AVFoundation/AVFoundation.h>
+#include <math.h>
+
 #include "AKModulatedDelayDSP.hpp"
 
-extern "C" void* createChorusDSP(int nChannels, double sampleRate)
+extern "C" void *createChorusDSP(int nChannels, double sampleRate)
 {
     return new AKModulatedDelayDSP(kChorus);
 }
 
-extern "C" void* createFlangerDSP(int nChannels, double sampleRate)
+extern "C" void *createFlangerDSP(int nChannels, double sampleRate)
 {
     return new AKModulatedDelayDSP(kFlanger);
 }
@@ -48,7 +53,7 @@ const float kAKFlanger_MinDryWetMix = kFlangerMinDryWetMix;
 const float kAKFlanger_MaxDryWetMix = kFlangerMaxDryWetMix;
 
 AKModulatedDelayDSP::AKModulatedDelayDSP(AKModulatedDelayType type)
-    : AudioKitCore::ModulatedDelay(type)
+    : AKModulatedDelay(type)
     , AKDSPBase()
 {
     depthRamp.setTarget(0.0f, true);
@@ -73,12 +78,12 @@ AKModulatedDelayDSP::AKModulatedDelayDSP(AKModulatedDelayType type)
 void AKModulatedDelayDSP::init(int channels, double sampleRate)
 {
     AKDSPBase::init(channels, sampleRate);
-    AudioKitCore::ModulatedDelay::init(channels, sampleRate);
+    AKModulatedDelay::init(channels, sampleRate);
 }
 
 void AKModulatedDelayDSP::deinit()
 {
-    AudioKitCore::ModulatedDelay::deinit();
+    AKModulatedDelay::deinit();
 }
 
 void AKModulatedDelayDSP::setParameter(AUParameterAddress address, float value, bool immediate)
@@ -96,11 +101,11 @@ void AKModulatedDelayDSP::setParameter(AUParameterAddress address, float value, 
         case AKModulatedDelayParameterDryWetMix:
             dryWetMixRamp.setTarget(value, immediate);
             break;
-        case AKModulatedDelayParameterRampTime:
-            frequencyRamp.setRampTime(value, _sampleRate);
-            depthRamp.setRampTime(value, _sampleRate);
-            feedbackRamp.setRampTime(value, _sampleRate);
-            dryWetMixRamp.setRampTime(value, _sampleRate);
+        case AKModulatedDelayParameterRampDuration:
+            frequencyRamp.setRampDuration(value, _sampleRate);
+            depthRamp.setRampDuration(value, _sampleRate);
+            feedbackRamp.setRampDuration(value, _sampleRate);
+            dryWetMixRamp.setRampDuration(value, _sampleRate);
             break;
     }
 }
@@ -116,8 +121,8 @@ float AKModulatedDelayDSP::getParameter(AUParameterAddress address)
             return feedbackRamp.getTarget();
         case AKModulatedDelayParameterDryWetMix:
             return dryWetMixRamp.getTarget();
-        case AKModulatedDelayParameterRampTime:
-            return frequencyRamp.getRampTime(_sampleRate);
+        case AKModulatedDelayParameterRampDuration:
+            return frequencyRamp.getRampDuration(_sampleRate);
     }
     return 0;
 }
@@ -133,6 +138,15 @@ void AKModulatedDelayDSP::process(AUAudioFrameCount frameCount, AUAudioFrameCoun
     outBuffers[1] = (float *)_outBufferListPtr->mBuffers[1].mData + bufferOffset;
     unsigned channelCount = _outBufferListPtr->mNumberBuffers;
 
+    if (!_playing)
+    {
+        // effect bypassed: just copy input to output
+        memcpy(outBuffers[0], inBuffers[0], frameCount * sizeof(float));
+        if (channelCount > 0)
+            memcpy(outBuffers[1], inBuffers[1], frameCount * sizeof(float));
+        return;
+    }
+
     // process in chunks of maximum length CHUNKSIZE
     for (int frameIndex = 0; frameIndex < frameCount; frameIndex += CHUNKSIZE) {
         int frameOffset = int(frameIndex + bufferOffset);
@@ -146,11 +160,11 @@ void AKModulatedDelayDSP::process(AUAudioFrameCount frameCount, AUAudioFrameCoun
         dryWetMixRamp.advanceTo(_now + frameOffset);
         
         // apply changes
-        modOscillator.setFrequency(frequencyRamp.getValue());
+        setModFrequencyHz(frequencyRamp.getValue());
         modDepthFraction = depthRamp.getValue();
         float fb = feedbackRamp.getValue();
-        leftDelayLine.setFeedback(fb);
-        rightDelayLine.setFeedback(fb);
+        setLeftFeedback(fb);
+        setRightFeedback(fb);
         dryWetMix = dryWetMixRamp.getValue();
 
         // process

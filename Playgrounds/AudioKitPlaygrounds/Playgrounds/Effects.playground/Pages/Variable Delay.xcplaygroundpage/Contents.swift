@@ -4,11 +4,12 @@ import AudioKitPlaygrounds
 import AudioKit
 
 let file = try AKAudioFile(readFileName: playgroundAudioFiles[0])
-let player = try AKPlayer(audioFile: file)
+let player = AKPlayer(audioFile: file)
 player.isLooping = true
+player.buffering = .always
 
 var delay = AKVariableDelay(player)
-delay.rampTime = 0.2
+delay.rampDuration = 0.2
 AudioKit.output = AKMixer(player, delay)
 
 try AudioKit.start()
@@ -27,9 +28,6 @@ class LiveView: AKLiveViewController {
         })
         addView(AKSlider(property: "Feedback", value: delay.feedback) { sliderValue in
             delay.feedback = sliderValue
-        })
-        addView(AKButton(title: "Clear") { _ in
-            delay.clear()
         })
     }
 }

@@ -9,6 +9,7 @@ let file = try AKAudioFile(readFileName: playgroundAudioFiles[0])
 
 let player = AKPlayer(audioFile: file)
 player.isLooping = true
+player.buffering = .always
 
 var delay = AKDelay(player)
 delay.time = 0.01 // seconds
@@ -21,10 +22,10 @@ player.play()
 
 class LiveView: AKLiveViewController {
 
-    var timeSlider: AKSlider?
-    var feedbackSlider: AKSlider?
-    var lowPassCutoffFrequencySlider: AKSlider?
-    var dryWetMixSlider: AKSlider?
+    var timeSlider: AKSlider!
+    var feedbackSlider: AKSlider!
+    var lowPassCutoffFrequencySlider: AKSlider!
+    var dryWetMixSlider: AKSlider!
 
     override func viewDidLoad() {
         addTitle("Delay")
