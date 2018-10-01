@@ -6,7 +6,9 @@
 //  Copyright © 2018 AudioKit. All rights reserved.
 //
 
-extension AKPlayer: AKTiming {
+// TODO: Turning the protocol conformance extension to just normal extension, crashing for some reason due to the player object not seeing the class extension
+// Something to do w/ @objc modifier, I don't see a crash when i omit @objc from AKTiming...
+extension AKPlayer {
     @objc public func start(at audioTime: AVAudioTime?) {
         play(at: audioTime)
     }
