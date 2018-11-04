@@ -230,7 +230,11 @@ extension AKSettings {
         if ❗️AKSettings.disableAVAudioSessionCategoryManagement {
             do {
                 try AKTry {
-                    try session.setCategory(category.avCategory, mode: .default, options: options)
+                   if #available(iOS 10.0, *) {
+                        try session.setCategory(category.avCategory, mode: .default, options: options)
+                    } else {
+                        session.perform(NSSelectorFromString("setCategory:error:"), with: category.avCategory)
+                    }
                 }
             } catch let error as NSError {
                 AKLog("Error: \(error) Cannot set AVAudioSession Category to \(category) with options: \(options)")
@@ -361,10 +365,8 @@ extension AKSettings {
                 return AVAudioSession.Category.playAndRecord.rawValue
             case .multiRoute:
                 return AVAudioSession.Category.multiRoute.rawValue
-            #if !os(tvOS)
-            case .audioProcessing:
-                return AVAudioSession.Category.audioProcessing.rawValue
-            #endif
+            default :
+                return AVAudioSession.Category.soloAmbient.rawValue
             }
         }
         
@@ -382,10 +384,8 @@ extension AKSettings {
                 return .playAndRecord
             case .multiRoute:
                 return .multiRoute
-            #if !os(tvOS)
-            case .audioProcessing:
-                return .audioProcessing
-            #endif
+            default:
+                return .soloAmbient
             }
         }
     }

@@ -39,14 +39,15 @@ open class AKMicrophone: AKNode, AKToggleable {
     override public init() {
         super.init()
         self.avAudioNode = mixer
-
         AKSettings.audioInputEnabled = true
 
-        // Manually doing the connection since .connect(to:) doesn't support format arguments yet
         #if os(iOS)
-        let format = setFormatForDevice()
-        AudioKit.engine.attach(self.avAudioNode)
+        let format = getFormatForDevice()
+        // we have to connect the input at the original device sample rate, because once AVAudioEngine is initialized, it reports the wrong rate
+        setAVSessionSampleRate(sampleRate: AudioKit.deviceSampleRate)
+        AudioKit.engine.attach(avAudioUnitOrNode)
         AudioKit.engine.connect(AudioKit.engine.inputNode, to: self.avAudioNode, format: format!)
+        setAVSessionSampleRate(sampleRate: AKSettings.sampleRate)
         #elseif !os(tvOS)
         AudioKit.engine.inputNode.connect(to: self.avAudioNode)
         #endif
@@ -54,6 +55,16 @@ open class AKMicrophone: AKNode, AKToggleable {
 
     deinit {
         AKSettings.audioInputEnabled = false
+    }
+
+    private func setAVSessionSampleRate(sampleRate: Double) {
+        #if !os(macOS)
+        do {
+            try AVAudioSession.sharedInstance().setPreferredSampleRate(sampleRate)
+        } catch {
+            AKLog(error)
+        }
+        #endif
     }
 
     /// Function to start, play, or activate the node, all do the same thing
@@ -71,37 +82,15 @@ open class AKMicrophone: AKNode, AKToggleable {
         }
     }
 
-    // Iphone 6s and up have the hardware mic locked at 48k. This causes issues because AudioKit natively wants to run at 44.1k
-    // Here we detect the type of device, so we can set the entire session to 48k if needed
-    private func getIphoneType() -> String {
-            var systemInfo = utsname()
-            uname(&systemInfo)
-            let machineMirror = Mirror(reflecting: systemInfo.machine)
-            let identifier = machineMirror.children.reduce("") { identifier, element in
-                guard let value = element.value as? Int8, value != 0 else { return identifier }
-                return identifier + String(UnicodeScalar(UInt8(value)))
-            }
-        return identifier
-    }
-
     // Here is where we actually check the device type and make the settings, if needed
-    private func setFormatForDevice() -> AVAudioFormat? {
-        #if os(iOS)
-        var desiredFS = AudioKit.engine.inputNode.inputFormat(forBus: 0).sampleRate
-        let typeString = getIphoneType()
-        let stringArray = typeString.components(separatedBy: CharacterSet.decimalDigits.inverted)
-        if let firstNumber = stringArray.first(where: { Int($0) != nil }), let number = Int(firstNumber), number > 7,
-            let inFirst = AVAudioSession.sharedInstance().currentRoute.inputs.first,
-            let outFirst = AVAudioSession.sharedInstance().currentRoute.outputs.first,
-            inFirst.portType == .builtInMic,
-            (outFirst.portType == .builtInSpeaker || outFirst.portType == .builtInReceiver)
-        {
-            desiredFS = 48000.0
-            AKSettings.sampleRate = 48000.0
-        }
+    private func getFormatForDevice() -> AVAudioFormat? {
+        var channelCount: UInt32 = 2
+        #if os(iOS) && !targetEnvironment(simulator)
+        channelCount = AudioKit.engine.inputNode.inputFormat(forBus: 0).channelCount
+        let desiredFS = AudioKit.deviceSampleRate
         #else
         let desiredFS = AKSettings.sampleRate
         #endif
-        return AVAudioFormat(standardFormatWithSampleRate: desiredFS, channels: 2)
+        return AVAudioFormat(standardFormatWithSampleRate: desiredFS, channels: channelCount)
     }
 }

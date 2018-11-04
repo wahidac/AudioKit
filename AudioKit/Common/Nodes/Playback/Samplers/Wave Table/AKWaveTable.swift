@@ -207,6 +207,7 @@ open class AKWaveTable: AKNode, AKComponent {
                 AKLog("Error: self is nil")
                 return
             }
+            strongSelf.avAudioUnit = avAudioUnit
             strongSelf.avAudioNode = avAudioUnit
             strongSelf.internalAU = avAudioUnit.auAudioUnit as? AKAudioUnitType
             strongSelf.internalAU!.completionHandler = completionHandler
@@ -326,6 +327,8 @@ open class AKWaveTable: AKNode, AKComponent {
         internalAU?.loadAudioData(data?.pointee, size: UInt32(file.samplesCount) * file.channelCount,
                                   sampleRate: Float(file.sampleRate), numChannels: file.channelCount)
     }
-    //todo open func loadSound()
 
+    deinit {
+        internalAU?.destroy()
+    }
 }
